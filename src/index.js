@@ -4,6 +4,7 @@ import web3, { PublicKey } from '@solana/web3.js';
 import { Metaplex } from '@metaplex-foundation/js';
 import dotenv from 'dotenv';
 import fs from 'fs';
+import util from 'util'
 dotenv.config();
 
 const token_address = process.env.TOKEN_ADDRESS;
@@ -11,7 +12,7 @@ const token_address = process.env.TOKEN_ADDRESS;
 
 const tgToken = '7308017784:AAHCiHj48NLms-Y6iQ_nMUFD165jRT0BhcA'
 const rpcURL =
-  'https://wiser-weathered-vineyard.solana-mainnet.quiknode.pro/78ff15f7ed17f1807fc15e7535dbeb5756f179b5/'
+  'https://mainnet.helius-rpc.com/?api-key=351a75c0-adba-4e26-b066-a2e062cde11f'
 
 const bot = new Telegraf(tgToken, { handlerTimeout: 9_000_000 })
 
@@ -428,102 +429,134 @@ async function runScanning(address) {
 }
 // const url = `https://mainnet.helius-rpc.com/?api-key=351a75c0-adba-4e26-b066-a2e062cde11f`;
 
-// const findHolders = async () => {
-//   // Pagination logic
-//   let page = 1;
-//   // allOwners will store all the addresses that hold the token
-//   let allOwners = new Set();
 
-//   while (true) {
+// async function get_token_largest_accounts(token_mint_address) {
+//   const url = "https://mainnet.helius-rpc.com/?api-key=351a75c0-adba-4e26-b066-a2e062cde11f";
+//   const headers = { "Content-Type": "application/json" };
+//   const data = {
+//     "jsonrpc": "2.0",
+//     "id": 1,
+//     "method": "getTokenLargestAccounts",
+//     "params": [
+//       token_mint_address
+//     ]
+//   };
+
+//   try {
 //     const response = await fetch(url, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         jsonrpc: "2.0",
-//         method: "getTokenAccounts",
-//         id: "helius-test",
-//         params: {
-//           page: page,
-//           limit: 10,
-//           displayOptions: {},
-//           //mint address for the token we are interested in
-//           mint: token_address,
-//         },
-//       }),
+//       method: 'POST',
+//       headers: headers,
+//       body: JSON.stringify(data)
 //     });
-//     const data = await response.json();
-//     console.log("data===================", data);
-//     // Pagination logic. 
-//     if (!data.result || data.result.token_accounts.length === 0 || page == 10) {
-//       console.log(`No more results. Total pages: ${page - 1}`);
-//       break;
+
+//     if (response.status === 200) {
+//       const responseData = await response.json();
+//       console.log("Largest token accounts:", responseData);
+//     } else {
+//       console.log(`Error: Failed to fetch data with status code ${response.status}`);
 //     }
-//     console.log(`Processing results from page ${page}`);
-//     // Adding unique owners to a list of token owners. 
-//     data.result.token_accounts.forEach((account) =>
-//       allOwners.add(account.owner)
-//     );
-//     page++;
+//   } catch (error) {
+//     console.error('Error:', error);
 //   }
 
-//   fs.writeFileSync(
-//     "output.json",
-//     JSON.stringify(Array.from(allOwners), null, 2)
-//   );
+//   const connection = new web3.Connection(rpcURL);
+//   connection.getTokenLargestAccounts(new PublicKey(token_mint_address)).then(ret => {
+//     console.log(ret.value);
+//     console.log(ret.value.length);
+//   }).catch(error => {
+//     console.log(error);
+//   });
+// }
+
+// get_token_largest_accounts(token_address);
+
+
+// const getTokenAccounts = async () => {
+//   const fetch = (await import("node-fetch")).default;
+//   // const fetch = await import('node-fetch').then((m) => m.default);
+//   const response = await fetch(rpcURL, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({
+//       jsonrpc: "2.0",
+//       method: "getTokenAccounts",
+//       id: "helius-test",
+//       params: {
+//         page: 1,
+//         limit: 100,
+//         "displayOptions": {
+//           "showZeroBalance": false,
+//         },
+//         owner: token_address,
+//       },
+//     }),
+//   });
+//   const data = await response.json();
+//   console.log("data========================", data)
+//   if (!data.result) {
+//     console.error("No result in the response", data);
+//     return;
+//   }
+
+//   console.log(JSON.stringify(data.result, null, 2));
 // };
-// findHolders();
 
-function get_token_largest_accounts(token_mint_address) {
-  const url = "https://api.mainnet-beta.solana.com";
-  const headers = { "Content-Type": "application/json" };
-  const data = {
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "getTokenLargestAccounts",
-    "params": [
-      token_mint_address
-    ]
-  };
+// getTokenAccounts();
 
-  // Sending a POST request to the API endpoint
-  fetch(url, {
-    method: 'POST',
-    headers: headers,
-    body: JSON.stringify(data)
-  })
-    .then(async (response) => {
-      if (response.status === 200) {
-        console.log("get wallets address========================>", (await response.json()))
-        return response.json();
-      } else {
-        console.log(`Error: Failed to fetch data with status code ${response.status}`);
-        return null;
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      return null;
+const findHolders = async () => {
+  let page = 1;
+  let allOwners = new Set();
+
+  while (true) {
+    const response = await fetch(rpcURL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "getTokenAccounts",
+        id: "helius-test",
+        params: {
+          page: page,
+          limit: 10,
+          displayOptions: {},
+          mint: token_address,
+        },
+      }),
     });
+    const data = await response.json();
 
-  // const connection = new web3.Connection(rpcURL)
-  // connection.getTokenLargestAccounts(new PublicKey(token_mint_address)).then(ret => {
-  //   console.log(ret.value);
-  //   console.log(ret.value.length);
-  // }).catch(error => {
-  //   console.log(error);
-  // })
+    if (!data.result || data.result.token_accounts.length === 0 || page == 10) {
+      console.log(`No more results. Total pages: ${page - 1}`);
+
+      break;
+    }
+
+    console.log("wallets", util.inspect(data, { showHidden: false, depth: null, colors: true }))
+    console.log("---------------------------length-------------------", data.result.token_accounts.length)
+
+    data.result.token_accounts.forEach((account) =>
+      allOwners.add(account.owner)
+    );
+    page++;
+  }
+
+  // for (let i = 0; i < allOwners.length; i++) {
+  //   const element = array[i];
+
+  // }
 
 
-  // getTokenAccountsByOwner(new solanaWeb3.PublicKey(<recipient address>),
-  //   {mint : new solanaWeb3.PublicKey(<spl token address>) }, "finalized")
+  fs.writeFileSync(
+    "output.json",
+    JSON.stringify(Array.from(allOwners), null, 2)
+  );
+};
 
-
-}
-
-get_token_largest_accounts(token_address);
-
+findHolders();
 
 let response = await runScanning("B4Nv5FjjnDdr5p84xcKBrGTZ7t94bnftnQkpMncUSsj2");
 bot.start(ctx => ctx.reply('🙌🙌 Welcome To Solana PNL Bot 😁😁'))
