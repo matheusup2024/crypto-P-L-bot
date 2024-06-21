@@ -471,40 +471,6 @@ async function runScanning(address) {
 // get_token_largest_accounts(token_address);
 
 
-// const getTokenAccounts = async () => {
-//   const fetch = (await import("node-fetch")).default;
-//   // const fetch = await import('node-fetch').then((m) => m.default);
-//   const response = await fetch(rpcURL, {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/json",
-//     },
-//     body: JSON.stringify({
-//       jsonrpc: "2.0",
-//       method: "getTokenAccounts",
-//       id: "helius-test",
-//       params: {
-//         page: 1,
-//         limit: 100,
-//         "displayOptions": {
-//           "showZeroBalance": false,
-//         },
-//         owner: token_address,
-//       },
-//     }),
-//   });
-//   const data = await response.json();
-//   console.log("data========================", data)
-//   if (!data.result) {
-//     console.error("No result in the response", data);
-//     return;
-//   }
-
-//   console.log(JSON.stringify(data.result, null, 2));
-// };
-
-// getTokenAccounts();
-
 const findHolders = async () => {
   let page = 1;
   let allOwners = new Set();
@@ -529,14 +495,20 @@ const findHolders = async () => {
     });
     const data = await response.json();
 
-    if (!data.result || data.result.token_accounts.length === 0 || page == 10) {
+    data.wallets?.result?.token_accounts.sort((item1, item2) => {
+      if (item1.amount > item2.amount) { return 1; }
+      else if (item1.amount == item2.amount) { return 0; }
+      else { return -1; }
+    })
+
+    console.log("---------------------------data-------------------", data)
+    if (!data.result || data.result.token_accounts.length === 0 || page == 11) {
       console.log(`No more results. Total pages: ${page - 1}`);
 
       break;
     }
 
     console.log("wallets", util.inspect(data, { showHidden: false, depth: null, colors: true }))
-    console.log("---------------------------length-------------------", data.result.token_accounts.length)
 
     data.result.token_accounts.forEach((account) =>
       allOwners.add(account.owner)
@@ -544,15 +516,12 @@ const findHolders = async () => {
     page++;
   }
 
-  // for (let i = 0; i < allOwners.length; i++) {
-  //   const element = array[i];
-
-  // }
-
 
   fs.writeFileSync(
     "output.json",
     JSON.stringify(Array.from(allOwners), null, 2)
+
+
   );
 };
 

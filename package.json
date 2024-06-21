@@ -5,9 +5,9 @@
   "main": "./src/index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon --exec ts-node -r tsconfig-paths/register .",
+    "dev": "node --exec ts-node -r tsconfig-paths/register .",
     "build": "tsc",
-    "start": "nodemon src/index.js"
+    "start": "node src/index.js"
   },
   "nodemonConfig": {
     "execMap": {
