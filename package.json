@@ -1,0 +1,36 @@
+{
+  "name": "new-tokens-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon --exec ts-node -r tsconfig-paths/register .",
+    "build": "tsc",
+    "start": "nodemon src/index.js"
+  },
+  "nodemonConfig": {
+    "execMap": {
+      "ts": "node --loader ts-node/esm"
+    },
+    "ext": "ts js json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^8.55.0",
+    "nodemon": "^3.0.2",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.3.2"
+  },
+  "dependencies": {
+    "@metaplex-foundation/js": "^0.20.1",
+    "@solana/web3.js": "^1.93.0",
+    "axios": "^1.7.2",
+    "dotenv": "^16.4.5",
+    "fs": "^0.0.1-security",
+    "telegraf": "^4.16.3"
+  }
+}
