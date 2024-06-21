@@ -1,11 +1,11 @@
-import axios from 'axios';
+// import axios from 'axios';
 import { Telegraf } from 'telegraf';
 import web3, { PublicKey } from '@solana/web3.js';
 import { Metaplex } from '@metaplex-foundation/js';
 import dotenv from 'dotenv';
 import fs from 'fs';
-import _ from 'lodash';
-import util from 'util'
+// import _ from 'lodash';
+
 dotenv.config();
 
 const token_address = process.env.TOKEN_ADDRESS;
@@ -497,37 +497,33 @@ const findHolders = async () => {
   });
   let data = await response.json();
 
-  // let source_arr1, dest_arr2;
-  // source_arr1 = data.result?.token_accounts;
+  //******************sort wallet address******************** */
 
-  // dest_arr2 = _.sortBy(source_arr1, ['amount']);
-  // console.log('-------------------source------------------', source_arr1)
-  // console.log('-------------------sort------------------', dest_arr2)
   await data.result?.token_accounts.sort((item1, item2) => {
     if (item1.amount < item2.amount) {
       return 1;
     }
     else if (item1.amount == item2.amount) { return 0; }
     else { return -1; }
-  })
+  });
 
 
   console.log("---------------------sort_result------------------------", data.result?.token_accounts)
   console.log("---------------------length------------------------", data.result?.token_accounts.length)
 
-  // console.log("wallets", util.inspect(data, { showHidden: false, depth: null, colors: true }))
 
-  data.result.token_accounts.forEach((account) =>
-    allOwners.add(account.owner)
-  );
+  const topAccounts = data.result.token_accounts.filter((account) => {
+    const key = new PublicKey(account.owner)
+    return PublicKey.isOnCurve(key.toBytes())
+  }).map(account => account.owner).slice(0, 100);
 
+  console.log("====================topAccounts======================", topAccounts)
+  console.log("====================topAccounts_length======================", topAccounts.length)
 
 
   fs.writeFileSync(
     "output.json",
-    JSON.stringify(Array.from(allOwners), null, 2)
-
-
+    JSON.stringify(Array.from(topAccounts), null, 2)
   );
 };
 
