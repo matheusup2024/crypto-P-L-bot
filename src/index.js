@@ -4,6 +4,7 @@ import web3, { PublicKey } from '@solana/web3.js';
 import { Metaplex } from '@metaplex-foundation/js';
 import dotenv from 'dotenv';
 import fs from 'fs';
+import _ from 'lodash';
 import util from 'util'
 dotenv.config();
 
@@ -443,7 +444,7 @@ async function runScanning(address) {
 //   };
 
 //   try {
-//     const response = await fetch(url, {
+//     const response = await fetch(rpcURL, {
 //       method: 'POST',
 //       headers: headers,
 //       body: JSON.stringify(data)
@@ -475,46 +476,51 @@ const findHolders = async () => {
   let page = 1;
   let allOwners = new Set();
 
-  while (true) {
-    const response = await fetch(rpcURL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "getTokenAccounts",
-        id: "helius-test",
-        params: {
-          page: page,
-          limit: 10,
-          displayOptions: {},
-          mint: token_address,
+
+  const response = await fetch(rpcURL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      method: "getTokenAccounts",
+      id: "helius-test",
+      params: {
+        page: 1,
+        limit: 560,
+        displayOptions: {
         },
-      }),
-    });
-    const data = await response.json();
+        mint: token_address,
+      },
+    }),
+  });
+  let data = await response.json();
 
-    data.wallets?.result?.token_accounts.sort((item1, item2) => {
-      if (item1.amount > item2.amount) { return 1; }
-      else if (item1.amount == item2.amount) { return 0; }
-      else { return -1; }
-    })
+  // let source_arr1, dest_arr2;
+  // source_arr1 = data.result?.token_accounts;
 
-    console.log("---------------------------data-------------------", data)
-    if (!data.result || data.result.token_accounts.length === 0 || page == 11) {
-      console.log(`No more results. Total pages: ${page - 1}`);
-
-      break;
+  // dest_arr2 = _.sortBy(source_arr1, ['amount']);
+  // console.log('-------------------source------------------', source_arr1)
+  // console.log('-------------------sort------------------', dest_arr2)
+  await data.result?.token_accounts.sort((item1, item2) => {
+    if (item1.amount < item2.amount) {
+      return 1;
     }
+    else if (item1.amount == item2.amount) { return 0; }
+    else { return -1; }
+  })
 
-    console.log("wallets", util.inspect(data, { showHidden: false, depth: null, colors: true }))
 
-    data.result.token_accounts.forEach((account) =>
-      allOwners.add(account.owner)
-    );
-    page++;
-  }
+  console.log("---------------------sort_result------------------------", data.result?.token_accounts)
+  console.log("---------------------length------------------------", data.result?.token_accounts.length)
+
+  // console.log("wallets", util.inspect(data, { showHidden: false, depth: null, colors: true }))
+
+  data.result.token_accounts.forEach((account) =>
+    allOwners.add(account.owner)
+  );
+
 
 
   fs.writeFileSync(
